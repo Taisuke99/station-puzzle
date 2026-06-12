@@ -497,4 +497,127 @@ function loop(time) {
   draw();
 }
 
-// ── 壁の追加 / 削除 ────────────────────────────────────�
+// ── 壁の追加 / 削除 ─────────────────────────────────────
+function addWall(x1, y1, x2, y2) {
+  var dx=x2-x1, dy=y2-y1;
+  var len = Math.sqrt(dx*dx+dy*dy);
+  if (len < 8) return;
+  var cost = Math.floor(len * stage.wallCostPerPx);
+  if (cost > remainingBudget) { flashBudget(); return; }
+  userWalls.push({x1:x1, y1:y1, x2:x2, y2:y2});
+  remainingBudget -= cost;
+  updateUI();
+}
+
+function flashBudget() {
+  var el = document.getElementById('budget-num');
+  el.style.color = '#f55';
+  setTimeout(function(){ el.style.color = '#f0ad4e'; }, 400);
+}
+
+function ptSegDist(px, py, x1, y1, x2, y2) {
+  var dx=x2-x1, dy=y2-y1, lenSq=dx*dx+dy*dy;
+  if (lenSq === 0) return Math.hypot(px-x1, py-y1);
+  var t = Math.max(0, Math.min(1, ((px-x1)*dx+(py-y1)*dy)/lenSq));
+  return Math.hypot(px-(x1+t*dx), py-(y1+t*dy));
+}
+
+function removeWallAt(x, y) {
+  for (var i = userWalls.length-1; i >= 0; i--) {
+    var w = userWalls[i];
+    if (ptSegDist(x, y, w.x1, w.y1, w.x2, w.y2) < 14) {
+      var len2 = Math.hypot(w.x2-w.x1, w.y2-w.y1);
+      remainingBudget = Math.min(maxBudget, remainingBudget + Math.floor(len2 * stage.wallCostPerPx));
+      userWalls.splice(i, 1);
+      updateUI();
+      return;
+    }
+  }
+}
+
+function getPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  var src = e.touches ? e.touches[0] : e;
+  return {
+    x: (src.clientX - rect.left) * (W / rect.width),
+    y: (src.clientY - rect.top)  * (H / rect.height),
+  };
+}
+
+canvas.addEventListener('mousedown', function(e) {
+  var p = getPos(e);
+  if (mode === 'draw') currentDraw = {x1:p.x, y1:p.y, x2:p.x, y2:p.y};
+  else removeWallAt(p.x, p.y);
+});
+canvas.addEventListener('mousemove', function(e) {
+  if (!currentDraw) return;
+  var p = getPos(e);
+  currentDraw.x2 = p.x; currentDraw.y2 = p.y;
+});
+canvas.addEventListener('mouseup', function(e) {
+  if (!currentDraw) return;
+  var p = getPos(e);
+  addWall(currentDraw.x1, currentDraw.y1, p.x, p.y);
+  currentDraw = null;
+});
+canvas.addEventListener('mouseleave', function() {
+  if (currentDraw) { addWall(currentDraw.x1,currentDraw.y1,currentDraw.x2,currentDraw.y2); currentDraw=null; }
+});
+canvas.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+  var p = getPos(e); removeWallAt(p.x, p.y);
+});
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  var p = getPos(e);
+  if (mode === 'draw') currentDraw = {x1:p.x, y1:p.y, x2:p.x, y2:p.y};
+  else removeWallAt(p.x, p.y);
+}, {passive:false});
+canvas.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (!currentDraw) return;
+  var p = getPos(e); currentDraw.x2=p.x; currentDraw.y2=p.y;
+}, {passive:false});
+canvas.addEventListener('touchend', function(e) {
+  e.preventDefault();
+  if (!currentDraw) return;
+  var t = e.changedTouches[0];
+  var rect = canvas.getBoundingClientRect();
+  var x = (t.clientX - rect.left)*(W/rect.width);
+  var y = (t.clientY - rect.top)*(H/rect.height);
+  addWall(currentDraw.x1,currentDraw.y1,x,y);
+  currentDraw=null;
+}, {passive:false});
+
+document.getElementById('btn-draw').onclick = function() {
+  mode='draw';
+  document.getElementById('btn-draw').classList.add('active');
+  document.getElementById('btn-erase').classList.remove('active');
+};
+document.getElementById('btn-erase').onclick = function() {
+  mode='erase';
+  document.getElementById('btn-erase').classList.add('active');
+  document.getElementById('btn-draw').classList.remove('active');
+};
+document.getElementById('btn-toggle').onclick = function() {
+  if (gameOver) return;
+  var btn = document.getElementById('btn-toggle');
+  if (!isRunning) {
+    isRunning=true; isPaused=false;
+    spawnTimer = setInterval(spawnBall, stage.spawnInterval);
+    btn.textContent='\u23f8 \u4e00\u6642\u505c\u6b62'; btn.style.background='#d9534f';
+  } else if (!isPaused) {
+    isPaused=true; clearInterval(spawnTimer);
+    btn.textContent='\u25b6 \u518d\u958b'; btn.style.background='#5cb85c';
+  } else {
+    isPaused=false;
+    spawnTimer = setInterval(spawnBall, stage.spawnInterval);
+    btn.textContent='\u23f8 \u4e00\u6642\u505c\u6b62'; btn.style.background='#d9534f';
+  }
+};
+document.getElementById('btn-reset').onclick = function() { initStage(); };
+
+initStage();
+</script>
+</body>
+</html>
