@@ -116,7 +116,7 @@
 <div id="ui">
   <div id="stage-info">
     <div>STAGE <span id="stage-num">1</span></div>
-    <div id="count-display">0 / <span id="target-num">5</span></div>
+    <div id="count-display"><span id="exit-count">0</span> / <span id="target-num">5</span></div>
     <div>投入: <span id="spawned-num">0</span> / <span id="total-num">10</span></div>
   </div>
   <div id="mission">出口に <span id="m-target">5</span> 個送り込め！</div>
@@ -247,13 +247,11 @@ function updateUI() {
   document.getElementById('target-num').textContent = stage.target;
   document.getElementById('total-num').textContent = stage.totalBalls;
   document.getElementById('m-target').textContent = stage.target;
-  document.getElementById('count-display').textContent = exitCount + ' / ';
-  document.getElementById('target-num').textContent = stage.target;
+  document.getElementById('exit-count').textContent = exitCount;
   document.getElementById('spawned-num').textContent = spawnedCount;
-  updateCount();
 }
 function updateCount() {
-  document.getElementById('count-display').textContent = exitCount + ' / ';
+  document.getElementById('exit-count').textContent = exitCount;
   document.getElementById('spawned-num').textContent = spawnedCount;
 }
 
@@ -606,3 +604,4 @@ initStage();
 </script>
 </body>
 </html>
+                                                                              
