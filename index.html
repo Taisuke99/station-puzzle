@@ -5,141 +5,81 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>ステーションパズル</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #1a1a2e;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-    color: #fff;
-    overflow-y: auto;
-  }
-  #ui {
-    width: 400px;
-    max-width: 100vw;
-    padding: 5px 10px 3px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex-shrink: 0;
-  }
-  #row1 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: #aaa;
-  }
-  #row1 .val { font-size: 15px; color: #fff; font-weight: bold; }
-  #mission {
-    text-align: center;
-    font-size: 13px;
-    color: #7ec8e3;
-  }
-  #budget-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: #aaa;
-  }
-  #budget-track {
-    flex: 1;
-    height: 6px;
-    background: #333;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  #budget-fill {
-    height: 100%;
-    background: #f0ad4e;
-    border-radius: 3px;
-    transition: width 0.2s;
-  }
-  #budget-num { font-size: 13px; color: #f0ad4e; font-weight: bold; min-width: 44px; text-align: right; }
-  #dir-section {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .dir-ctrl {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: #aaa;
-    flex: 1;
-    min-width: 120px;
-  }
-  .dir-ctrl label { white-space: nowrap; }
-  .dir-ctrl input[type=range] {
-    flex: 1;
-    height: 4px;
-    accent-color: #7ec8e3;
-  }
-  .dir-angle { font-size: 11px; color: #7ec8e3; min-width: 28px; text-align: right; }
-  #controls {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-  }
-  button {
-    padding: 7px 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: bold;
-    transition: opacity 0.15s, transform 0.1s;
-    white-space: nowrap;
-  }
-  button:active { transform: scale(0.95); }
-  #btn-draw { background: #4a90d9; color: #fff; }
-  #btn-erase { background: #e07070; color: #fff; }
-  #btn-toggle { background: #5cb85c; color: #fff; }
-  #btn-reset { background: #555; color: #ccc; }
-  button.active { outline: 2px solid #fff; opacity: 1; }
-  button:not(.active) { opacity: 0.7; }
-  #canvas-wrap {
-    position: relative;
-    width: 400px;
-    max-width: 100vw;
-    flex-shrink: 0;
-  }
-  canvas {
-    display: block;
-    width: 400px;
-    max-width: 100vw;
-    cursor: crosshair;
-    touch-action: none;
-  }
-  #overlay {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.78);
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    border-radius: 4px;
-  }
-  #overlay.show { display: flex; }
-  #overlay-title { font-size: 30px; font-weight: bold; }
-  #overlay-sub { font-size: 14px; color: #ccc; }
-  #overlay-btn {
-    padding: 11px 28px;
-    background: #5cb85c;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    font-family: inherit;
-  }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  color: #fff;
+}
+#ui {
+  width: 400px;
+  max-width: 100vw;
+  padding: 6px 10px 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+#row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #aaa;
+}
+#row1 .val { font-size: 14px; color: #fff; font-weight: bold; }
+#mission { text-align: center; font-size: 12px; color: #7ec8e3; }
+#budget-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #aaa;
+}
+#budget-track {
+  flex: 1; height: 5px; background: #333; border-radius: 3px; overflow: hidden;
+}
+#budget-fill {
+  height: 100%; background: #f0ad4e; border-radius: 3px; transition: width 0.2s;
+}
+#budget-num { font-size: 12px; color: #f0ad4e; font-weight: bold; min-width: 42px; text-align: right; }
+#dir-section { display: flex; gap: 6px; flex-wrap: wrap; }
+.dir-ctrl {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: #aaa; flex: 1; min-width: 110px;
+}
+.dir-ctrl input[type=range] { flex: 1; height: 3px; accent-color: #7ec8e3; }
+.dir-angle { font-size: 10px; color: #7ec8e3; min-width: 26px; text-align: right; }
+#controls { display: flex; gap: 5px; justify-content: center; }
+button {
+  padding: 6px 10px; border: none; border-radius: 5px;
+  font-size: 11px; cursor: pointer; font-family: inherit; font-weight: bold;
+  transition: opacity 0.15s, transform 0.1s; white-space: nowrap;
+}
+button:active { transform: scale(0.95); }
+#btn-draw  { background: #4a90d9; color: #fff; }
+#btn-erase { background: #e07070; color: #fff; }
+#btn-toggle { background: #5cb85c; color: #fff; }
+#btn-reset { background: #555; color: #ccc; }
+button.active { outline: 2px solid #fff; opacity: 1; }
+button:not(.active) { opacity: 0.72; }
+#canvas-wrap { position: relative; width: 400px; max-width: 100vw; }
+canvas { display: block; width: 400px; max-width: 100vw; cursor: crosshair; touch-action: none; }
+#overlay {
+  display: none; position: absolute; inset: 0;
+  background: rgba(0,0,0,0.78);
+  flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+}
+#overlay.show { display: flex; }
+#overlay-title { font-size: 28px; font-weight: bold; }
+#overlay-sub { font-size: 13px; color: #ccc; }
+#overlay-btn {
+  padding: 10px 26px; background: #5cb85c; color: #fff;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: bold;
+  cursor: pointer; font-family: inherit;
+}
 </style>
 </head>
 <body>
@@ -156,7 +96,7 @@
     <div id="budget-track"><div id="budget-fill" style="width:100%"></div></div>
     <span id="budget-num">300pt</span>
   </div>
-  <div id="dir-section"><!-- 入口ごとに動的生成 --></div>
+  <div id="dir-section"></div>
   <div id="controls">
     <button id="btn-draw" class="active">✏️ 描く</button>
     <button id="btn-erase">✂️ 消す</button>
@@ -166,153 +106,186 @@
 </div>
 
 <div id="canvas-wrap">
-  <canvas id="canvas" width="400" height="520"></canvas>
+  <canvas id="canvas" width="400" height="510"></canvas>
   <div id="overlay">
     <div id="overlay-title">🎉 クリア！</div>
     <div id="overlay-sub"></div>
-    <button id="overlay-btn">次のステージへ</button>
+    <button id="overlay-btn">次へ →</button>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
-const { Engine, Bodies, Body, Composite } = Matter;
-
-const W = 400, H = 520;
+// ── 定数 ─────────────────────────────────────────────────────
+const W = 400, H = 510;
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const ctx    = canvas.getContext('2d');
 
-// ── ステージ定義 ──────────────────────────────────────────
+const GRAVITY    = 0.38;
+const RESTITUTION = 0.46;
+const FRICTION_T  = 0.88; // tangential friction on collision
+const FRICTION_AIR = 0.9995;
+const BALL_R      = 10;
+const BALL_SPEED  = 3.8;
+
+// ── ステージ ────────────────────────────────────────────────
 const STAGES = [
   {
-    id: 1, totalBalls: 10, target: 5, spawnInterval: 1200, budget: 300,
-    ballCost: 5, wallCostPerPx: 0.4,
-    entrances: [{ x: 200, y: 28 }],
-    exits: [{ x: 140, y: H - 10, w: 120, color: '#5cb85c', label: 'OUT' }],
-    obstacles: [],
+    id:1, totalBalls:10, target:5, spawnInterval:1200, budget:300,
+    ballCost:5, wallCostPerPx:0.4,
+    entrances:[{x:200, y:30}],
+    exits:[{x:140, y:H-12, w:120, color:'#5cb85c', label:'OUT'}],
+    obstacles:[],
   },
   {
-    id: 2, totalBalls: 15, target: 10, spawnInterval: 900, budget: 260,
-    ballCost: 5, wallCostPerPx: 0.4,
-    entrances: [{ x: 100, y: 28 }, { x: 300, y: 28 }],
-    exits: [{ x: 155, y: H - 10, w: 90, color: '#f0ad4e', label: 'OUT' }],
-    obstacles: [
-      { x: 80,  y: 190, w: 80, h: 14, angle: 0.3 },
-      { x: 280, y: 250, w: 80, h: 14, angle: -0.3 },
-      { x: 175, y: 360, w: 60, h: 14, angle: 0 },
+    id:2, totalBalls:15, target:10, spawnInterval:900, budget:280,
+    ballCost:5, wallCostPerPx:0.4,
+    entrances:[{x:100, y:30},{x:300, y:30}],
+    exits:[{x:155, y:H-12, w:90, color:'#f0ad4e', label:'OUT'}],
+    obstacles:[
+      {x:80,  y:180, w:80, h:14, angle: 0.3},
+      {x:280, y:245, w:80, h:14, angle:-0.3},
+      {x:175, y:355, w:60, h:14, angle: 0},
     ],
   },
   {
-    id: 3, totalBalls: 20, target: 15, spawnInterval: 800, budget: 220,
-    ballCost: 4, wallCostPerPx: 0.4,
-    entrances: [{ x: 200, y: 28 }],
-    exits: [
-      { x: 60,  y: H - 10, w: 80, color: '#d9534f', label: 'A' },
-      { x: 270, y: H - 10, w: 80, color: '#5bc0de', label: 'B' },
+    id:3, totalBalls:20, target:15, spawnInterval:800, budget:240,
+    ballCost:4, wallCostPerPx:0.4,
+    entrances:[{x:200, y:30}],
+    exits:[
+      {x:60,  y:H-12, w:80, color:'#d9534f', label:'A'},
+      {x:270, y:H-12, w:80, color:'#5bc0de', label:'B'},
     ],
-    obstacles: [
-      { x: 200, y: 280, w: 16, h: 110, angle: 0 },
-      { x: 90,  y: 400, w: 70, h: 14, angle: 0.2 },
-      { x: 310, y: 400, w: 70, h: 14, angle: -0.2 },
+    obstacles:[
+      {x:200, y:275, w:16, h:110, angle:0},
+      {x:88,  y:395, w:70, h:14,  angle: 0.2},
+      {x:312, y:395, w:70, h:14,  angle:-0.2},
     ],
   },
 ];
 
-// ── 状態 ──────────────────────────────────────────────────
-let stageIndex = 0;
-let stage, engine, balls, wallBodies;
-let mode = 'draw';
-let isRunning = false, isPaused = false;
-let spawnTimer = null;
-let spawnedCount = 0, exitCount = 0;
+// ── 状態 ─────────────────────────────────────────────────────
+let stageIndex = 0, stage;
+let balls = [], userWalls = [], obsSegs = [];
+let mode = 'draw', isRunning = false, isPaused = false;
+let spawnTimer = null, spawnedCount = 0, exitCount = 0;
 let remainingBudget = 0, maxBudget = 0;
-let currentDraw = null;
-let userWalls = [];
-let gameOver = false;
-let entranceAngles = []; // radians per entrance, 0 = straight down
+let currentDraw = null, gameOver = false;
+let entranceAngles = [];
+let loopStarted = false;
 
-// ── 初期化 ──────────────────────────────────────────────────
+// ── 物理ヘルパー ─────────────────────────────────────────────
+function rotate(x, y, a, ox, oy) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return {x: ox + x*c - y*s, y: oy + x*s + y*c};
+}
+
+function rectToSegs(cx, cy, w, h, a) {
+  const hw = w/2, hh = h/2;
+  const p = [
+    rotate(-hw,-hh,a,cx,cy), rotate(hw,-hh,a,cx,cy),
+    rotate( hw, hh,a,cx,cy), rotate(-hw,hh,a,cx,cy),
+  ];
+  return [
+    {x1:p[0].x,y1:p[0].y,x2:p[1].x,y2:p[1].y},
+    {x1:p[1].x,y1:p[1].y,x2:p[2].x,y2:p[2].y},
+    {x1:p[2].x,y1:p[2].y,x2:p[3].x,y2:p[3].y},
+    {x1:p[3].x,y1:p[3].y,x2:p[0].x,y2:p[0].y},
+  ];
+}
+
+function resolveCircleSeg(ball, seg) {
+  const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1;
+  const lenSq = dx*dx + dy*dy;
+  if (lenSq < 0.001) return;
+  const t = Math.max(0, Math.min(1, ((ball.x-seg.x1)*dx + (ball.y-seg.y1)*dy) / lenSq));
+  const cx = seg.x1 + t*dx, cy = seg.y1 + t*dy;
+  const ddx = ball.x - cx, ddy = ball.y - cy;
+  const dist = Math.sqrt(ddx*ddx + ddy*ddy);
+  if (dist < BALL_R && dist > 0.001) {
+    const nx = ddx/dist, ny = ddy/dist;
+    ball.x += nx*(BALL_R - dist);
+    ball.y += ny*(BALL_R - dist);
+    const dot = ball.vx*nx + ball.vy*ny;
+    if (dot < 0) {
+      ball.vx -= (1 + RESTITUTION)*dot*nx;
+      ball.vy -= (1 + RESTITUTION)*dot*ny;
+      const tx = -ny, ty = nx;
+      const tdot = ball.vx*tx + ball.vy*ty;
+      ball.vx -= (1 - FRICTION_T)*tdot*tx;
+      ball.vy -= (1 - FRICTION_T)*tdot*ty;
+    }
+  }
+}
+
+// ── 初期化 ───────────────────────────────────────────────────
 function initStage() {
-  if (engine) Engine.clear(engine);
-  engine = Engine.create({ gravity: { y: 1.5 } });
-  balls = []; wallBodies = []; userWalls = [];
+  stage = STAGES[stageIndex];
+  balls = []; userWalls = []; obsSegs = [];
   spawnedCount = 0; exitCount = 0;
   isRunning = false; isPaused = false; gameOver = false;
   currentDraw = null;
   clearInterval(spawnTimer);
 
-  stage = STAGES[stageIndex];
   maxBudget = remainingBudget = stage.budget;
   entranceAngles = stage.entrances.map(() => 0);
+
+  // 境界
+  obsSegs.push(
+    {x1:0,   y1:0, x2:0,   y2:H},
+    {x1:W,   y1:0, x2:W,   y2:H},
+    {x1:0,   y1:H, x2:W,   y2:H},
+  );
+  // 障害物のセグメント
+  stage.obstacles.forEach(o => obsSegs.push(...rectToSegs(o.x, o.y, o.w, o.h, o.angle||0)));
 
   buildDirectionUI();
   updateUI();
 
-  // 固定壁
-  Composite.add(engine.world, [
-    Bodies.rectangle(-5,   H / 2, 10, H, { isStatic: true }),
-    Bodies.rectangle(W+5,  H / 2, 10, H, { isStatic: true }),
-    Bodies.rectangle(W/2,  H+5,  W, 10, { isStatic: true }),
-  ]);
-
-  // 障害物
-  stage.obstacles.forEach(o => {
-    const b = Bodies.rectangle(o.x, o.y, o.w, o.h, {
-      isStatic: true, angle: o.angle || 0, friction: 0.3, restitution: 0.4,
-    });
-    Composite.add(engine.world, b);
-    wallBodies.push({ body: b, isObstacle: true });
-  });
-
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('btn-toggle').textContent = '▶ 開始';
   document.getElementById('btn-toggle').style.background = '#5cb85c';
-  requestAnimationFrame(loop);
+
+  if (!loopStarted) { loopStarted = true; requestAnimationFrame(loop); }
 }
 
-// ── 射出方向UI ────────────────────────────────────────────
+// ── 方向UI ───────────────────────────────────────────────────
 function buildDirectionUI() {
   const sec = document.getElementById('dir-section');
   sec.innerHTML = '';
   stage.entrances.forEach((e, i) => {
-    const label = stage.entrances.length > 1 ? `入口${i+1}` : '射出角';
+    const lbl = stage.entrances.length > 1 ? `入口${i+1}` : '角度';
     const div = document.createElement('div');
     div.className = 'dir-ctrl';
-    const lbl = document.createElement('label');
-    lbl.textContent = label;
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = -60; slider.max = 60; slider.value = 0; slider.step = 5;
-    const angleSpan = document.createElement('span');
-    angleSpan.className = 'dir-angle';
-    angleSpan.textContent = '0°';
-    slider.addEventListener('input', () => {
-      const deg = parseInt(slider.value);
-      entranceAngles[i] = deg * Math.PI / 180;
-      angleSpan.textContent = deg + '°';
-    });
-    div.appendChild(lbl);
-    div.appendChild(slider);
-    div.appendChild(angleSpan);
+    const l = document.createElement('label'); l.textContent = lbl;
+    const sl = document.createElement('input');
+    sl.type='range'; sl.min=-60; sl.max=60; sl.value=0; sl.step=5;
+    const sp = document.createElement('span');
+    sp.className='dir-angle'; sp.textContent='0°';
+    sl.oninput = () => {
+      const d = parseInt(sl.value);
+      entranceAngles[i] = d * Math.PI / 180;
+      sp.textContent = d + '°';
+    };
+    div.append(l, sl, sp);
     sec.appendChild(div);
   });
 }
 
-// ── UI更新 ────────────────────────────────────────────────
+// ── UI更新 ───────────────────────────────────────────────────
 function updateUI() {
-  document.getElementById('stage-num').textContent    = stage.id;
-  document.getElementById('target-num').textContent   = stage.target;
-  document.getElementById('total-num').textContent    = stage.totalBalls;
-  document.getElementById('m-target').textContent     = stage.target;
-  document.getElementById('exit-count').textContent   = exitCount;
-  document.getElementById('spawned-num').textContent  = spawnedCount;
+  document.getElementById('stage-num').textContent   = stage.id;
+  document.getElementById('target-num').textContent  = stage.target;
+  document.getElementById('total-num').textContent   = stage.totalBalls;
+  document.getElementById('m-target').textContent    = stage.target;
+  document.getElementById('exit-count').textContent  = exitCount;
+  document.getElementById('spawned-num').textContent = spawnedCount;
   const pct = Math.max(0, remainingBudget / maxBudget * 100);
-  document.getElementById('budget-fill').style.width  = pct + '%';
+  document.getElementById('budget-fill').style.width = pct + '%';
   document.getElementById('budget-fill').style.background = pct > 40 ? '#f0ad4e' : '#e07070';
-  document.getElementById('budget-num').textContent   = Math.max(0, remainingBudget) + 'pt';
+  document.getElementById('budget-num').textContent  = Math.max(0,remainingBudget) + 'pt';
 }
 
-// ── スポーン ──────────────────────────────────────────────
+// ── 玉スポーン ────────────────────────────────────────────────
 function spawnBall() {
   if (gameOver) return;
   if (spawnedCount >= stage.totalBalls) {
@@ -321,74 +294,45 @@ function spawnBall() {
     return;
   }
   if (remainingBudget < stage.ballCost) {
-    // 予算切れ — 強制終了
     clearInterval(spawnTimer);
     setTimeout(checkEnd, 2000);
     return;
   }
   const idx = spawnedCount % stage.entrances.length;
   const src = stage.entrances[idx];
-  const angle = entranceAngles[idx] || 0;
-  const speed = 3;
-  const jitter = (Math.random() - 0.5) * 8;
-  const r = 10;
-  const hues = [220, 160, 40, 0, 280, 180];
-  const hue = hues[spawnedCount % hues.length];
-  const ball = Bodies.circle(src.x + jitter, src.y, r, {
-    restitution: 0.4, friction: 0.15, frictionAir: 0.01, label: 'ball', _hue: hue,
+  const ang = entranceAngles[idx] || 0;
+  const jitter = (Math.random() - 0.5) * 6;
+  const hues = [220,160,40,0,280,180];
+  balls.push({
+    x: src.x + jitter, y: src.y,
+    vx: Math.sin(ang)*BALL_SPEED + (Math.random()-0.5)*0.5,
+    vy: Math.cos(ang)*BALL_SPEED,
+    hue: hues[spawnedCount % hues.length],
   });
-  Body.setVelocity(ball, {
-    x: Math.sin(angle) * speed + (Math.random() - 0.5) * 0.5,
-    y: Math.cos(angle) * speed,
-  });
-  Composite.add(engine.world, ball);
-  balls.push(ball);
   spawnedCount++;
   remainingBudget -= stage.ballCost;
   updateUI();
 }
 
-function checkEnd() {
-  if (gameOver) return;
-  gameOver = true;
-  clearInterval(spawnTimer);
-  showResult();
-}
-
-function showResult() {
-  const overlay = document.getElementById('overlay');
-  const title   = document.getElementById('overlay-title');
-  const sub     = document.getElementById('overlay-sub');
-  const btn     = document.getElementById('overlay-btn');
-  if (exitCount >= stage.target) {
-    title.textContent = '🎉 クリア！';
-    title.style.color = '#7ec8e3';
-    sub.textContent   = `${exitCount} 個を出口に送り込んだ！`;
-    if (stageIndex < STAGES.length - 1) {
-      btn.textContent = '次のステージへ →';
-      btn.onclick = () => { stageIndex++; initStage(); };
-    } else {
-      btn.textContent = '🏆 全ステージ完了！';
-      btn.onclick = () => { stageIndex = 0; initStage(); };
-    }
-  } else {
-    title.textContent = '😓 もう一度！';
-    title.style.color = '#e07070';
-    sub.textContent   = `${exitCount} 個しか届かなかった（目標: ${stage.target}）`;
-    btn.textContent   = 'リトライ →';
-    btn.onclick       = () => initStage();
+// ── 物理ステップ ──────────────────────────────────────────────
+function stepPhysics() {
+  const segs = [...obsSegs, ...userWalls];
+  for (const ball of balls) {
+    ball.vy += GRAVITY * 0.5;
+    ball.vx *= FRICTION_AIR;
+    ball.vy *= FRICTION_AIR;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    for (const seg of segs) resolveCircleSeg(ball, seg);
   }
-  overlay.classList.add('show');
 }
 
-// ── 出口判定 ──────────────────────────────────────────────
+// ── 出口判定 ──────────────────────────────────────────────────
 function checkExits() {
   balls = balls.filter(ball => {
-    const p = ball.position;
     for (const exit of stage.exits) {
-      const ex1 = exit.x - exit.w / 2, ex2 = exit.x + exit.w / 2;
-      if (p.y > H - 38 && p.x >= ex1 && p.x <= ex2) {
-        Composite.remove(engine.world, ball);
+      const ex1 = exit.x - exit.w/2, ex2 = exit.x + exit.w/2;
+      if (ball.y > H - 36 && ball.x >= ex1 && ball.x <= ex2) {
         exitCount++;
         updateUI();
         if (!gameOver && exitCount >= stage.target && spawnedCount >= stage.totalBalls) {
@@ -398,8 +342,7 @@ function checkExits() {
         return false;
       }
     }
-    if (p.y > H + 50) {
-      Composite.remove(engine.world, ball);
+    if (ball.y > H + 60) {
       if (!gameOver && spawnedCount >= stage.totalBalls && balls.length <= 1) {
         gameOver = true; setTimeout(showResult, 400);
       }
@@ -409,15 +352,42 @@ function checkExits() {
   });
 }
 
-// ── 描画 ──────────────────────────────────────────────────
+function checkEnd() {
+  if (gameOver) return;
+  gameOver = true; clearInterval(spawnTimer); showResult();
+}
+
+function showResult() {
+  const overlay = document.getElementById('overlay');
+  const title = document.getElementById('overlay-title');
+  const sub   = document.getElementById('overlay-sub');
+  const btn   = document.getElementById('overlay-btn');
+  if (exitCount >= stage.target) {
+    title.textContent = '🎉 クリア！'; title.style.color = '#7ec8e3';
+    sub.textContent = exitCount + ' 個を出口に送り込んだ！';
+    if (stageIndex < STAGES.length - 1) {
+      btn.textContent = '次のステージへ →';
+      btn.onclick = () => { stageIndex++; initStage(); };
+    } else {
+      btn.textContent = '🏆 全ステージ完了！';
+      btn.onclick = () => { stageIndex = 0; initStage(); };
+    }
+  } else {
+    title.textContent = '😓 もう一度！'; title.style.color = '#e07070';
+    sub.textContent = exitCount + ' 個しか届かなかった（目標: ' + stage.target + '）';
+    btn.textContent = 'リトライ →';
+    btn.onclick = () => initStage();
+  }
+  overlay.classList.add('show');
+}
+
+// ── 描画 ──────────────────────────────────────────────────────
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#0f0f1e';
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#0f0f1e'; ctx.fillRect(0, 0, W, H);
 
   // グリッド
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
   for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
   for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
 
@@ -425,125 +395,106 @@ function draw() {
   stage.entrances.forEach((e, i) => {
     ctx.strokeStyle = '#7ec8e3'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(e.x, e.y, 13, 0, Math.PI*2); ctx.stroke();
-    ctx.fillStyle = 'rgba(126,200,227,0.12)'; ctx.fill();
+    ctx.fillStyle = 'rgba(126,200,227,0.15)'; ctx.fill();
     ctx.fillStyle = '#7ec8e3'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('IN', e.x, e.y + 3);
-    // 方向矢印
+
     const ang = entranceAngles[i] || 0;
     const len = 22;
-    const ax = e.x + Math.sin(ang) * len, ay = e.y + Math.cos(ang) * len;
+    const ax = e.x + Math.sin(ang)*len, ay = e.y + Math.cos(ang)*len;
     ctx.strokeStyle = 'rgba(126,200,227,0.7)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(ax, ay); ctx.stroke();
-    // 矢印先端
-    const headAng = Math.atan2(ay - e.y, ax - e.x);
+    const ha = Math.atan2(ay-e.y, ax-e.x);
     ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(ax - 7*Math.cos(headAng - 0.4), ay - 7*Math.sin(headAng - 0.4));
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(ax - 7*Math.cos(headAng + 0.4), ay - 7*Math.sin(headAng + 0.4));
+    ctx.moveTo(ax,ay); ctx.lineTo(ax-7*Math.cos(ha-0.4), ay-7*Math.sin(ha-0.4));
+    ctx.moveTo(ax,ay); ctx.lineTo(ax-7*Math.cos(ha+0.4), ay-7*Math.sin(ha+0.4));
     ctx.stroke();
   });
 
   // 出口
   stage.exits.forEach(exit => {
-    const x1 = exit.x - exit.w / 2;
-    ctx.globalAlpha = 0.25;
-    ctx.fillStyle = exit.color; ctx.fillRect(x1, H-28, exit.w, 28);
+    const x1 = exit.x - exit.w/2;
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = exit.color;
+    ctx.fillRect(x1, H-28, exit.w, 28);
     ctx.globalAlpha = 1;
-    ctx.strokeStyle = exit.color; ctx.lineWidth = 3; ctx.strokeRect(x1, H-28, exit.w, 28);
-    ctx.fillStyle = exit.color; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.strokeStyle = exit.color; ctx.lineWidth = 3;
+    ctx.strokeRect(x1, H-28, exit.w, 28);
+    ctx.fillStyle = exit.color;
+    ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(exit.label, exit.x, H - 10);
   });
 
   // 障害物
-  wallBodies.forEach(w => {
-    if (!w.isObstacle) return;
-    const b = w.body;
+  stage.obstacles.forEach(o => {
     ctx.save();
-    ctx.translate(b.position.x, b.position.y);
-    ctx.rotate(b.angle);
-    const hw = (b.bounds.max.x - b.bounds.min.x) / 2;
-    const hh = (b.bounds.max.y - b.bounds.min.y) / 2;
+    ctx.translate(o.x, o.y); ctx.rotate(o.angle||0);
     ctx.fillStyle = '#c05020';
-    ctx.fillRect(-hw, -hh, hw*2, hh*2);
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2;
-    for (let s = -hw*2; s < hw*2; s += 10) {
-      ctx.beginPath(); ctx.moveTo(s, -hh); ctx.lineTo(s - hh*2, hh); ctx.stroke();
+    ctx.fillRect(-o.w/2, -o.h/2, o.w, o.h);
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+    for (let s = -o.w; s < o.w; s += 8) {
+      ctx.beginPath(); ctx.moveTo(s,-o.h/2); ctx.lineTo(s-o.h, o.h/2); ctx.stroke();
     }
     ctx.restore();
   });
 
   // ユーザー壁
   userWalls.forEach(w => {
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(w.x1, w.y1); ctx.lineTo(w.x2, w.y2); ctx.stroke();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath(); ctx.arc(w.x1, w.y1, 3, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(w.x2, w.y2, 3, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(w.x1,w.y1); ctx.lineTo(w.x2,w.y2); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(w.x1,w.y1,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w.x2,w.y2,3,0,Math.PI*2); ctx.fill();
   });
 
   // 描画プレビュー
   if (currentDraw) {
-    const { x1,y1,x2,y2 } = currentDraw;
-    const dx = x2-x1, dy = y2-y1;
-    const len = Math.sqrt(dx*dx+dy*dy);
+    const {x1,y1,x2,y2} = currentDraw;
+    const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
     const cost = Math.floor(len * stage.wallCostPerPx);
-    ctx.globalAlpha = remainingBudget >= cost ? 0.55 : 0.8;
-    ctx.strokeStyle = remainingBudget >= cost ? '#ffffff' : '#ff5050';
-    ctx.lineWidth = 3; ctx.setLineDash([6,4]); ctx.lineCap = 'round';
+    const ok = remainingBudget >= cost;
+    ctx.globalAlpha = ok ? 0.55 : 0.8;
+    ctx.strokeStyle = ok ? '#fff' : '#f55'; ctx.lineWidth = 3;
+    ctx.setLineDash([6,4]); ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
-    // コスト表示
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
     if (len > 20) {
-      ctx.fillStyle = cost <= remainingBudget ? '#fff' : '#f66';
+      ctx.fillStyle = ok ? '#fff' : '#f55';
       ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(`-${cost}pt`, (x1+x2)/2, (y1+y2)/2 - 8);
+      ctx.fillText('-' + cost + 'pt', (x1+x2)/2, (y1+y2)/2 - 8);
     }
   }
 
   // 玉
   balls.forEach(ball => {
-    const p = ball.position;
-    const hue = ball._hue || 220;
-    ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI*2);
-    const g = ctx.createRadialGradient(p.x-3, p.y-3, 1, p.x, p.y, 10);
-    g.addColorStop(0, `hsl(${hue},80%,80%)`);
-    g.addColorStop(1, `hsl(${hue},70%,50%)`);
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI*2);
+    const g = ctx.createRadialGradient(ball.x-3, ball.y-3, 1, ball.x, ball.y, BALL_R);
+    g.addColorStop(0, 'hsl('+ball.hue+',80%,82%)');
+    g.addColorStop(1, 'hsl('+ball.hue+',70%,50%)');
     ctx.fillStyle = g; ctx.fill();
-    ctx.strokeStyle = `hsl(${hue},60%,40%)`; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = 'hsl('+ball.hue+',60%,38%)'; ctx.lineWidth = 1; ctx.stroke();
   });
 
-  // 予算切れ警告
+  // 予算切れ赤み
   if (remainingBudget <= 0 && !gameOver) {
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = '#ff5050';
-    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#f00'; ctx.fillRect(0,0,W,H);
     ctx.globalAlpha = 1;
   }
 }
 
-// ── ゲームループ ──────────────────────────────────────────
+// ── メインループ ──────────────────────────────────────────────
 let lastTime = 0;
 function loop(time) {
-  const dt = Math.min(time - lastTime, 32);
+  requestAnimationFrame(loop);
+  const dt = Math.min(time - lastTime, 33);
   lastTime = time;
   if (isRunning && !isPaused && !gameOver) {
-    Engine.update(engine, dt);
+    const steps = 2;
+    for (let i = 0; i < steps; i++) stepPhysics();
     checkExits();
   }
   draw();
-  requestAnimationFrame(loop);
 }
 
-// ── 壁の追加 / 削除 ──────────────────────────────────────
-function addWall(x1, y1, x2, y2) {
-  const dx = x2-x1, dy = y2-y1;
-  const len = Math.sqrt(dx*dx + dy*dy);
-  if (len < 10) return;
-  const cost = Math.floor(len * stage.wallCostPerPx);
-  if (cost > remainingBudget) { flashBudget(); return; }
-  const cx = (x1+x2)/2, cy = (y1+y2)/2;
-  const angle = Math.atan2(dy, dx);
-  const body = Bodies.rectangle(cx, cy, len, 6, {
-    isStatic: true, angle, fr
+// ── 壁の追加 / 削除 ────────────────────────────────────�
