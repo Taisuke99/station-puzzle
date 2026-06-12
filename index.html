@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ステーションパズル</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    color: #fff;
+    overflow: hidden;
+  }
+  #ui {
+    width: 400px;
+    max-width: 100vw;
+    padding: 10px 16px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #stage-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #aaa;
+  }
+  #stage-info span { font-size: 15px; color: #fff; font-weight: bold; }
+  #mission {
+    text-align: center;
+    font-size: 14px;
+    color: #7ec8e3;
+    letter-spacing: 0.05em;
+  }
+  #score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  #count-display {
+    font-size: 20px;
+    font-weight: bold;
+    color: #7ec8e3;
+  }
+  #controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  button:active { transform: scale(0.95); }
+  #btn-draw { background: #4a90d9; color: #fff; }
+  #btn-erase { background: #e07070; color: #fff; }
+  #btn-start { background: #5cb85c; color: #fff; }
+  #btn-reset { background: #555; color: #ccc; }
+  button.active { outline: 2px solid #fff; opacity: 1; }
+  button:not(.active) { opacity: 0.7; }
+  #canvas-wrap {
+    position: relative;
+    width: 400px;
+    max-width: 100vw;
+  }
+  canvas {
+    display: block;
+    width: 400px;
+    max-width: 100vw;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  #overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    border-radius: 4px;
+  }
+  #overlay.show { display: flex; }
+  #overlay-title { font-size: 32px; font-weight: bold; }
+  #overlay-sub { font-size: 15px; color: #ccc; }
+  #overlay-btn {
+    padding: 12px 32px;
+    background: #5cb85c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div id="stage-info">
+    <div>STAGE <span id="stage-num">1</span></div>
+    <div id="count-display">0 / <span id="target-num">5</span></div>
+    <div>投入: <span id="spawned-num">0</span> / <span id="total-num">10</span></div>
+  </div>
+  <div id="mission">出口に <span id="m-target">5</span> 個送り込め！</div>
+  <div id="controls">
+    <button id="btn-draw" class="active">✏️ 描く</button>
+    <button id="btn-erase">✂️ 消す</button>
+    <button id="btn-start">▶ スタート</button>
+    <button id="btn-reset">↺ リセット</button>
+  </div>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="canvas" width="400" height="580"></canvas>
+  <div id="overlay">
+    <div id="overlay-title">🎉 クリア！</div>
+    <div id="overlay-sub"></div>
+    <button id="overlay-btn">次のステージへ</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+const { Engine, Render, Runner, Bodies, Body, Composite, Events, Vector } = Matter;
+
+const W = 400, H = 580;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// ── ステージ定義 ──────────────────────────────────────────
+const STAGES = [
+  {
+    id: 1,
+    totalBalls: 10,
+    target: 5,
+    spawnInterval: 1200,
+    entrances: [{ x: 200, y: 30 }],
+    exits: [{ x: 140, y: H - 10, w: 120, color: '#5cb85c', label: 'OUT' }],
+    obstacles: [],
+  },
+  {
+    id: 2,
+    totalBalls: 15,
+    target: 10,
+    spawnInterval: 900,
+    entrances: [{ x: 100, y: 30 }, { x: 300, y: 30 }],
+    exits: [{ x: 155, y: H - 10, w: 90, color: '#f0ad4e', label: 'OUT' }],
+    obstacles: [
+      { x: 80, y: 200, w: 80, h: 14, angle: 0.3 },
+      { x: 280, y: 260, w: 80, h: 14, angle: -0.3 },
+      { x: 175, y: 380, w: 60, h: 14, angle: 0 },
+    ],
+  },
+  {
+    id: 3,
+    totalBalls: 20,
+    target: 15,
+    spawnInterval: 800,
+    entrances: [{ x: 200, y: 30 }],
+    exits: [
+      { x: 60, y: H - 10, w: 80, color: '#d9534f', label: 'A' },
+      { x: 270, y: H - 10, w: 80, color: '#5bc0de', label: 'B' },
+    ],
+    obstacles: [
+      { x: 200, y: 300, w: 16, h: 120, angle: 0 },
+      { x: 90, y: 420, w: 70, h: 14, angle: 0.2 },
+      { x: 310, y: 420, w: 70, h: 14, angle: -0.2 },
+    ],
+  },
+];
+
+// ── 状態 ──────────────────────────────────────────────────
+let stageIndex = 0;
+let stage = STAGES[0];
+let engine, balls, wallBodies, drawingWalls;
+let mode = 'draw'; // 'draw' | 'erase'
+let isRunning = false;
+let spawnTimer = null;
+let spawnedCount = 0;
+let exitCount = 0;
+let currentDraw = null; // { x1, y1 } during drag
+let userWalls = []; // { x1, y1, x2, y2, body }
+let gameOver = false;
+
+// ── 初期化 ─────────────────────────────────────────────────
+function initStage() {
+  if (engine) Engine.clear(engine);
+  engine = Engine.create({ gravity: { y: 1.5 } });
+  balls = [];
+  wallBodies = [];
+  userWalls = [];
+  spawnedCount = 0;
+  exitCount = 0;
+  isRunning = false;
+  gameOver = false;
+  currentDraw = null;
+  clearInterval(spawnTimer);
+
+  stage = STAGES[stageIndex];
+  updateUI();
+
+  // 壁（左右・底）
+  const walls = [
+    Bodies.rectangle(-5, H / 2, 10, H, { isStatic: true }),
+    Bodies.rectangle(W + 5, H / 2, 10, H, { isStatic: true }),
+    Bodies.rectangle(W / 2, H + 5, W, 10, { isStatic: true }),
+  ];
+  Composite.add(engine.world, walls);
+
+  // 障害物
+  stage.obstacles.forEach(o => {
+    const b = Bodies.rectangle(o.x, o.y, o.w, o.h, {
+      isStatic: true,
+      angle: o.angle || 0,
+      friction: 0.3,
+      restitution: 0.4,
+    });
+    Composite.add(engine.world, b);
+    wallBodies.push({ body: b, isObstacle: true });
+  });
+
+  document.getElementById('overlay').classList.remove('show');
+  requestAnimationFrame(loop);
+}
+
+// ── UI更新 ─────────────────────────────────────────────────
+function updateUI() {
+  document.getElementById('stage-num').textContent = stage.id;
+  document.getElementById('target-num').textContent = stage.target;
+  document.getElementById('total-num').textContent = stage.totalBalls;
+  document.getElementById('m-target').textContent = stage.target;
+  document.getElementById('count-display').textContent = exitCount + ' / ';
+  document.getElementById('target-num').textContent = stage.target;
+  document.getElementById('spawned-num').textContent = spawnedCount;
+  updateCount();
+}
+function updateCount() {
+  document.getElementById('count-display').textContent = exitCount + ' / ';
+  document.getElementById('spawned-num').textContent = spawnedCount;
+}
+
+// ── スポーン ────────────────────────────────────────────────
+function spawnBall() {
+  if (spawnedCount >= stage.totalBalls) {
+    clearInterval(spawnTimer);
+    // 最後の玉が消えるまで待ってチェック
+    setTimeout(checkEnd, 3000);
+    return;
+  }
+  const src = stage.entrances[spawnedCount % stage.entrances.length];
+  const jitter = (Math.random() - 0.5) * 16;
+  const r = 10;
+  const hues = [220, 160, 40, 0, 280, 180];
+  const hue = hues[spawnedCount % hues.length];
+  const ball = Bodies.circle(src.x + jitter, src.y, r, {
+    restitution: 0.4,
+    friction: 0.15,
+    frictionAir: 0.01,
+    label: 'ball',
+    render: { fillStyle: `hsl(${hue},70%,60%)` },
+    _hue: hue,
+  });
+  Body.setVelocity(ball, { x: (Math.random() - 0.5) * 1.5, y: 1 });
+  Composite.add(engine.world, ball);
+  balls.push(ball);
+  spawnedCount++;
+  updateCount();
+}
+
+function checkEnd() {
+  if (gameOver) return;
+  gameOver = true;
+  clearInterval(spawnTimer);
+  showResult();
+}
+
+function showResult() {
+  const overlay = document.getElementById('overlay');
+  const title = document.getElementById('overlay-title');
+  const sub = document.getElementById('overlay-sub');
+  const btn = document.getElementById('overlay-btn');
+  if (exitCount >= stage.target) {
+    title.textContent = '🎉 クリア！';
+    title.style.color = '#7ec8e3';
+    sub.textContent = `${exitCount} 個 を出口に送り込んだ！`;
+    if (stageIndex < STAGES.length - 1) {
+      btn.textContent = '次のステージへ →';
+      btn.onclick = () => { stageIndex++; initStage(); };
+    } else {
+      btn.textContent = '🏆 全ステージ完了！';
+      btn.onclick = () => { stageIndex = 0; initStage(); };
+    }
+  } else {
+    title.textContent = '😓 もう一度！';
+    title.style.color = '#e07070';
+    sub.textContent = `${exitCount} 個しか届かなかった（目標: ${stage.target}）`;
+    btn.textContent = 'リトライ →';
+    btn.onclick = () => initStage();
+  }
+  overlay.classList.add('show');
+}
+
+// ── 出口判定 ────────────────────────────────────────────────
+function checkExits() {
+  stage.exits.forEach(exit => {
+    const ex1 = exit.x - exit.w / 2;
+    const ex2 = exit.x + exit.w / 2;
+    balls = balls.filter(ball => {
+      const p = ball.position;
+      if (p.y > H - 30 && p.x >= ex1 && p.x <= ex2) {
+        Composite.remove(engine.world, ball);
+        exitCount++;
+        updateCount();
+        if (!gameOver && exitCount >= stage.target && spawnedCount >= stage.totalBalls) {
+          gameOver = true;
+          clearInterval(spawnTimer);
+          setTimeout(showResult, 600);
+        }
+        return false;
+      }
+      // 画面外も除去
+      if (p.y > H + 50) {
+        Composite.remove(engine.world, ball);
+        if (!gameOver && spawnedCount >= stage.totalBalls && balls.length === 0) {
+          gameOver = true;
+          setTimeout(showResult, 400);
+        }
+        return false;
+      }
+      return true;
+    });
+  });
+}
+
+// ── 描画 ────────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // 背景
+  ctx.fillStyle = '#0f0f1e';
+  ctx.fillRect(0, 0, W, H);
+
+  // グリッド
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // 入口
+  stage.entrances.forEach(e => {
+    ctx.strokeStyle = '#7ec8e3';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, 14, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(126,200,227,0.15)';
+    ctx.fill();
+    ctx.fillStyle = '#7ec8e3';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('IN', e.x, e.y + 4);
+  });
+
+  // 出口
+  stage.exits.forEach(exit => {
+    const x1 = exit.x - exit.w / 2;
+    ctx.fillStyle = exit.color + '33';
+    ctx.fillRect(x1, H - 28, exit.w, 28);
+    ctx.strokeStyle = exit.color;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x1, H - 28, exit.w, 28);
+    ctx.fillStyle = exit.color;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(exit.label, exit.x, H - 10);
+  });
+
+  // 障害物
+  wallBodies.forEach(w => {
+    if (!w.isObstacle) return;
+    const b = w.body;
+    const v = b.vertices;
+    ctx.save();
+    ctx.translate(b.position.x, b.position.y);
+    ctx.rotate(b.angle);
+    const hw = b.bounds.max.x - b.bounds.min.x;
+    const hh = b.bounds.max.y - b.bounds.min.y;
+    ctx.fillStyle = '#e07030';
+    ctx.fillRect(-hw / 2, -hh / 2, hw, hh);
+    // 斜線
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 2;
+    for (let s = -hw; s < hw * 2; s += 12) {
+      ctx.beginPath();
+      ctx.moveTo(s, -hh / 2);
+      ctx.lineTo(s - hh, hh / 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  });
+
+  // ユーザー壁
+  userWalls.forEach(w => {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(w.x1, w.y1);
+    ctx.lineTo(w.x2, w.y2);
+    ctx.stroke();
+    // 端点
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(w.x1, w.y1, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w.x2, w.y2, 3, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // 描画中の壁プレビュー
+  if (currentDraw) {
+    const { x1, y1, x2, y2 } = currentDraw;
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 4]);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // 玉
+  balls.forEach(ball => {
+    const p = ball.position;
+    const r = 10;
+    const hue = ball._hue || 220;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(p.x - 3, p.y - 3, 1, p.x, p.y, r);
+    grad.addColorStop(0, `hsl(${hue},80%,80%)`);
+    grad.addColorStop(1, `hsl(${hue},70%,50%)`);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = `hsl(${hue},60%,40%)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+}
+
+// ── ゲームループ ────────────────────────────────────────────
+let lastTime = 0;
+function loop(time) {
+  const dt = Math.min(time - lastTime, 32);
+  lastTime = time;
+  if (isRunning && !gameOver) {
+    Engine.update(engine, dt);
+    checkExits();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ── 壁の追加 ────────────────────────────────────────────────
+function addWall(x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 10) return;
+  const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+  const angle = Math.atan2(dy, dx);
+  const body = Bodies.rectangle(cx, cy, len, 6, {
+    isStatic: true,
+    angle,
+    friction: 0.3,
+    restitution: 0.4,
+    label: 'userWall',
+  });
+  Composite.add(engine.world, body);
+  userWalls.push({ x1, y1, x2, y2, body });
+}
+
+function removeWallAt(x, y) {
+  for (let i = userWalls.length - 1; i >= 0; i--) {
+    const w = userWalls[i];
+    // 線分に近い点を削除
+    const d = pointToSegDist(x, y, w.x1, w.y1, w.x2, w.y2);
+    if (d < 12) {
+      Composite.remove(engine.world, w.body);
+      userWalls.splice(i, 1);
+      return;
+    }
+  }
+}
+
+function pointToSegDist(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+// ── 入力イベント ────────────────────────────────────────────
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  const src = e.touches ? e.touches[0] : e;
+  return {
+    x: (src.clientX - rect.left) * scaleX,
+    y: (src.clientY - rect.top) * scaleY,
+  };
+}
+
+canvas.addEventListener('mousedown', e => {
+  const { x, y } = getPos(e);
+  if (mode === 'draw') {
+    currentDraw = { x1: x, y1: y, x2: x, y2: y };
+  } else {
+    removeWallAt(x, y);
+  }
+});
+canvas.addEventListener('mousemove', e => {
+  if (!currentDraw) return;
+  const { x, y } = getPos(e);
+  currentDraw.x2 = x;
+  currentDraw.y2 = y;
+});
+canvas.addEventListener('mouseup', e => {
+  if (!currentDraw) return;
+  const { x, y } = getPos(e);
+  addWall(currentDraw.x1, currentDraw.y1, x, y);
+  currentDraw = null;
+});
+canvas.addEventListener('mouseleave', () => {
+  if (currentDraw) {
+    addWall(currentDraw.x1, currentDraw.y1, currentDraw.x2, currentDraw.y2);
+    currentDraw = null;
+  }
+});
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const { x, y } = getPos(e);
+  removeWallAt(x, y);
+});
+
+// タッチ
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const { x, y } = getPos(e);
+  if (mode === 'draw') currentDraw = { x1: x, y1: y, x2: x, y2: y };
+  else removeWallAt(x, y);
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!currentDraw) return;
+  const { x, y } = getPos(e);
+  currentDraw.x2 = x;
+  currentDraw.y2 = y;
+}, { passive: false });
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (!currentDraw) return;
+  addWall(currentDraw.x1, currentDraw.y1, currentDraw.x2, currentDraw.y2);
+  currentDraw = null;
+}, { passive: false });
+
+// ── ボタン ──────────────────────────────────────────────────
+document.getElementById('btn-draw').addEventListener('click', () => {
+  mode = 'draw';
+  document.getElementById('btn-draw').classList.add('active');
+  document.getElementById('btn-erase').classList.remove('active');
+});
+document.getElementById('btn-erase').addEventListener('click', () => {
+  mode = 'erase';
+  document.getElementById('btn-erase').classList.add('active');
+  document.getElementById('btn-draw').classList.remove('active');
+});
+document.getElementById('btn-start').addEventListener('click', () => {
+  if (isRunning || gameOver) return;
+  isRunning = true;
+  spawnTimer = setInterval(spawnBall, stage.spawnInterval);
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+  initStage();
+});
+
+// ── スタート ────────────────────────────────────────────────
+initStage();
+</script>
+</body>
+</html>
